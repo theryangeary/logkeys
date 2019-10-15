@@ -22,6 +22,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <linux/input.h>
 
 #ifdef HAVE_CONFIG_H
@@ -465,7 +466,7 @@ int main(int argc, char **argv)
   
   time_t cur_time;
   time(&cur_time);
-#define TIME_FORMAT "%F %T%z > "  // results in YYYY-mm-dd HH:MM:SS+ZZZZ
+#define TIME_FORMAT "%F %T %s"  // results in YYYY-mm-dd HH:MM:SS+ZZZZ
   strftime(timestamp, sizeof(timestamp), TIME_FORMAT, localtime(&cur_time));
   
   if (args.flags & FLAG_NO_TIMESTAMPS)
@@ -558,8 +559,11 @@ int main(int argc, char **argv)
         if (args.flags & FLAG_NO_TIMESTAMPS)
           inc_size += fprintf(out, "\n");
         else {
+          struct timeval tv;
+          gettimeofday(&tv, NULL);
           strftime(timestamp, sizeof(timestamp), "\n" TIME_FORMAT, localtime(&event.time.tv_sec));
           inc_size += fprintf(out, "%s", timestamp);  // then newline and timestamp
+          inc_size += fprintf(out, " - %06ld > ", tv.tv_usec);
         }
         if (inc_size > 0) file_size += inc_size;
         if (!args.timestamp_every) {
